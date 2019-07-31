@@ -1,3 +1,10 @@
+.a {
+  text-decoration: none;
+}
+.div {
+  width: 300px;
+}
+
 .img_div {
   position: relative;
   width: 300px;
@@ -12,13 +19,13 @@
   -webkit-transition: -webkit-transform 0.5s;
 }
 
-.img_div:hover .img {
+.div:hover .img {
   transform: scale(1.1, 1.1);
   -webkit-transform: scale(1.1, 1.1);
 }
 
 .btn_div {
-  display: none;
+  display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -29,18 +36,48 @@
   bottom: 0;
 }
 
-.img_div:hover .btn_div {
+.btn_play {
   display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: #00000000;
+  transition: background-color 0.5s, transform 0.5s;
+  -webkit-transition: background-color 0.5s, -webkit-transform 0.5s;
 }
 
-.btn_play {
-  width: 120px;
-  height: 120px;
-  border-radius: 60px;
+.div:hover .btn_play {
   background-color: #00000077;
+  transform: scale(1.5, 1.5);
+  -webkit-transform: scale(1.5, 1.5);
+}
+
+.img_arrow_div {
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  transition: display 0.5s, opacity 0.5s;
+  -webkit-transition: display 0.5s, opacity 0.5s;
+  opacity: 0;
+}
+
+.div:hover .img_arrow_div {
+  opacity: 1;
 }
 
 .img_arrow {
-  width: 60px;
-  height: 60px;
+  width: 100%;
+  height: 100%;
+}
+
+.title {
+  color: black;
+  font-size: 30;
+}
+
+.div:hover .title {
+  font-weight: bold;
 }
