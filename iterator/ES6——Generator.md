@@ -201,10 +201,82 @@ for (let n of numbers()) {
 
 ## Generator.prototype.throw()
 
-Generator 函数返回的遍历器对象，都有一个`throw`方法，可以在函数体外抛出错误，然后在 Generator 函数体内捕获。
+* Generator 函数返回的遍历器对象，都有一个`throw`方法，可以在函数体外抛出错误，然后在 Generator 函数体内捕获。
 
-如果 Generator 函数内部没有部署`try...catch`代码块，那么`throw`方法抛出的错误，将被外部`try...catch`代码块捕获。
+* 如果 Generator 函数内部没有部署`try...catch`代码块，那么`throw`方法抛出的错误，将被外部`try...catch`代码块捕获。
+* `throw`方法抛出的错误要被内部捕获，前提是必须至少执行过一次`next`方法。
 
-`throw`方法被捕获以后，会附带执行下一条`yield`表达式。也就是说，会附带执行一次`next`方法。
+* `throw`方法被捕获以后，会附带执行下一条`yield`表达式。也就是说，会附带执行一次`next`方法。
 
-Generator 函数体外抛出的错误，可以在函数体内捕获；反过来，Generator 函数体内抛出的错误，也可以被函数体外的`catch`捕获。
+* Generator 函数体外抛出的错误，可以在函数体内捕获；反过来，Generator 函数体内抛出的错误，也可以被函数体外的`catch`捕获。
+
+* 一旦 Generator 执行过程中抛出错误，且没有被内部捕获，就不会再执行下去了。
+
+## Generator.prototype.return()
+
+`return`方法，可以返回给定的值，并且终结遍历 Generator 函数。
+
+```javascript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+var g = gen();
+
+g.next()        // { value: 1, done: false }
+g.return('foo') // { value: "foo", done: true }
+g.next()        // { value: undefined, done: true }
+```
+
+如果`return`方法调用时，不提供参数，则返回值的`value`属性为`undefined`。
+
+```javascript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+var g = gen();
+
+g.next()        // { value: 1, done: false }
+g.return() // { value: undefined, done: true }
+```
+
+如果 Generator 函数内部有`try...finally`代码块，且正在执行`try`代码块，那么`return`方法会推迟到`finally`代码块执行完再执行。
+
+```javascript
+function* numbers () {
+  yield 1;
+  try {
+    yield 2;
+    yield 3;
+  } finally {
+    yield 4;
+    yield 5;
+  }
+  yield 6;
+}
+var g = numbers();
+g.next() // { value: 1, done: false }
+g.next() // { value: 2, done: false }
+g.return(7) // { value: 4, done: false }
+g.next() // { value: 5, done: false }
+g.next() // { value: 7, done: true }
+```
+
+
+
+## next()、throw()、return() 的共同点
+
+都是让 Generator 函数恢复执行，并且使用不同的语句替换`yield`表达式。
+
+* `next()`是将`yield`表达式替换成一个值。
+* `throw()`是将`yield`表达式替换成一个`throw`语句
+* `return()`是将`yield`表达式替换成一个`return`语句
+
+## yield* 表达式
+
+ES6 提供了`yield*`表达式，作为解决办法，用来在一个 Generator 函数里面执行另一个 Generator 函数。
