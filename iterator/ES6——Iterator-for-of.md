@@ -145,6 +145,8 @@ ES6 规定，默认的 Iterator 接口部署在数据结构的`Symbol.iterator`�
 
 ### (3) *yield\**
 
+暂时略
+
 ### (4) 其他场合
 
 由于数组的遍历会调用遍历器接口，所以任何接受数组作为参数的场合，其实都调用了遍历器接口。下面是一些例子。
@@ -161,5 +163,200 @@ ES6 规定，默认的 Iterator 接口部署在数据结构的`Symbol.iterator`�
 
 ## Iterator 接口与 Generator 函数
 
+暂时略
 
+## 遍历器对象的 return()，throw()
 
+自己写遍历器对象生成函数，那么`next`方法是必须部署的，`return`方法和`throw`方法是否部署是可选的。
+
+### return()
+
+`return`方法的使用场合是，如果`for...of`循环提前退出（通常是因为出错，或者有`break`语句），就会调用`return`方法。如果一个对象在完成遍历前，需要清理或释放资源，就可以部署`return`方法。
+
+举例
+
+```javascript
+function readLinesSync(file) {
+  return {
+    [Symbol.iterator]() {
+      return {
+        next() {
+          return { done: false };
+        },
+        return() {
+          file.close();
+          return { done: true };
+        }
+      };
+    },
+  };
+}
+
+// 情况一
+for (let line of readLinesSync(fileName)) {
+  console.log(line);
+  break;
+}
+
+// 情况二
+for (let line of readLinesSync(fileName)) {
+  console.log(line);
+  throw new Error();
+}
+```
+
+> 注意，`return`方法必须返回一个对象，这是 Generator 规格决定的
+
+### throw()
+
+暂时略
+
+## for...of 循环
+
+一个数据结构只要部署了`Symbol.iterator`属性，就被视为具有 iterator 接口，就可以用`for...of`循环遍历它的成员。
+
+### 数组
+
+* `for...of`循环可以代替数组实例的`forEach`方法。
+
+* JavaScript 原有的`for...in`循环，只能获得对象的键名，不能直接获取键值。
+
+  ES6 提供`for...of`循环，允许遍历获得键值。
+
+  如果要通过`for...of`循环，获取数组的索引，可以借助数组实例的`entries`方法和`keys`方法。
+
+  ```javascript
+  var arr = ['a', 'b', 'c', 'd'];
+  
+  for (let a in arr) {
+    console.log(a); // 0 1 2 3
+  }
+  
+  for (let a of arr) {
+    console.log(a); // a b c d
+  }
+  ```
+
+  ```javascript
+  for (let index of ['a', 'b'].keys()) {
+    console.log(index);
+  }
+  // 0
+  // 1
+  
+  for (let elem of ['a', 'b'].values()) {
+    console.log(elem);
+  }
+  // 'a'
+  // 'b'
+  
+  for (let [index, elem] of ['a', 'b'].entries()) {
+    console.log(index, elem);
+  }
+  // 0 "a"
+  // 1 "b"
+  ```
+
+* `for...of`循环调用遍历器接口，数组的遍历器接口只返回具有数字索引的属性
+
+  ```javascript
+  let arr = [3, 5, 7];
+  arr.foo = 'hello';
+  
+  for (let i in arr) {
+    console.log(i); // "0", "1", "2", "foo"
+  }
+  
+  for (let i of arr) {
+    console.log(i); //  "3", "5", "7"
+  }
+  ```
+
+### Set 和 Map 结构
+
+```javascript
+var engines = new Set(["Gecko", "Trident", "Webkit", "Webkit"]);
+for (var e of engines) {
+  console.log(e);
+}
+// Gecko
+// Trident
+// Webkit
+
+var es6 = new Map();
+es6.set("edition", 6);
+es6.set("committee", "TC39");
+es6.set("standard", "ECMA-262");
+for (var [name, value] of es6) {
+  console.log(name + ": " + value);
+}
+// edition: 6
+// committee: TC39
+// standard: ECMA-262
+```
+
+### 计算生成的数据结构
+
+ES6 的数组、Set、Map 都部署了entries()、keys()、values()三个方法，调用后都返回遍历器对象。
+
+> Set中entries()， 键名和键值相同
+
+### 类似数组的对象
+
+`for...of`循环可用于：
+
+```javascript
+// 字符串
+let str = "hello";
+
+for (let s of str) {
+  console.log(s); // h e l l o
+}
+
+// DOM NodeList对象
+let paras = document.querySelectorAll("p");
+
+for (let p of paras) {
+  p.classList.add("test");
+}
+
+// arguments对象
+function printArgs() {
+  for (let x of arguments) {
+    console.log(x);
+  }
+}
+printArgs('a', 'b');
+// 'a'
+// 'b'
+```
+
+> 对于字符串来说，`for...of`循环还有一个特点，就是会正确识别 32 位 UTF-16 字符。
+
+> 并不是所有类似数组的对象都具有 Iterator 接口，可以使用`Array.from`方法将其转为数组，就可以采用for...of遍历。
+
+### 对象
+
+对于普通的对象，`for...of`结构不能直接使用，会报错，必须部署了 Iterator 接口后才能使用。但是，这样情况下，`for...in`循环依然可以用来遍历键名。
+
+* 使用`Object.keys`方法将对象的键名生成一个数组，然后遍历这个数组。
+
+* 另一个方法是使用 Generator 函数将对象重新包装一下。（暂时略）
+
+### 与其他遍历语法的比较
+
+forEach 缺点：
+
+* 无法中途跳出`forEach`循环，`break`命令或`return`命令都不能奏效。
+
+`for...in`循环有几个缺点：
+
+- 数组的键名是数字，但是`for...in`循环是以字符串作为键名“0”、“1”、“2”等等。
+- `for...in`循环不仅遍历数字键名，还会遍历手动添加的其他键，甚至包括原型链上的键。
+- 某些情况下，`for...in`循环会以任意顺序遍历键名。
+
+`for...of`循环优点：
+
+- 有着同`for...in`一样的简洁语法，但是没有`for...in`那些缺点。
+- 不同于`forEach`方法，它可以与`break`、`continue`和`return`配合使用。
+- 提供了遍历所有数据结构的统一操作接口。
