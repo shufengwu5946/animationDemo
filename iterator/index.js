@@ -96,16 +96,82 @@
 //   console.log(k);
 // }
 
-function* helloWorldGenerator() {
-  console.log("hello1");
-  console.log("hello2");
-  yield "hello";
-  console.log("hello3");
-  console.log("hello4");
-  yield "world";
-  console.log("hello5");
-  console.log("hello6");
-  return "ending";
-}
+// function* helloWorldGenerator() {
+//   console.log("hello1");
+//   console.log("hello2");
+//   yield "hello";
+//   console.log("hello3");
+//   console.log("hello4");
+//   yield "world";
+//   console.log("hello5");
+//   console.log("hello6");
+//   return "ending";
+// }
 
-var hw = helloWorldGenerator();
+// var hw = helloWorldGenerator();
+// console.log([...hw]);
+
+// function* gen() {
+//   var url = "https://api.github.com/users/github";
+//   var result = yield fetch(url);
+//   console.log(result.bio);
+// }
+// var g = gen();
+// var result = g.next();
+
+// result.value
+//   .then(function(data) {
+//     return data.json();
+//   })
+//   .then(function(data) {
+//     g.next(data);
+//   });
+
+
+
+/**
+ * node 环境测试
+ */
+var fs = require("fs");
+var thunkify = require("thunkify");
+var co = require("co");
+var path = require("path");
+var readFileThunk = thunkify(fs.readFile);
+
+var g = function*() {
+  console.log("start");
+  var f1 = yield readFileThunk(path.join(__dirname,'./index.html'));
+  console.log("f1");
+  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+  console.log("f2");
+  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+  console.log("f3");
+  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+  console.log("f4");
+  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+  console.log("f5");
+};
+
+// thunk 自动执行器
+// function run(fn) {
+//   var gen = fn();
+
+//   function next(err, data) {
+//     var result = gen.next(data);
+//     if (result.done) return;
+//     result.value(next);
+//   }
+
+//   next();
+// }
+
+// run(g)
+
+
+// co(g)
+//   .then(function() {
+//     console.log("Generator 函数执行完成");
+//   })
+//   .catch(function(e) {
+//     console.log(e);
+//   });

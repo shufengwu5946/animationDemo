@@ -86,6 +86,18 @@ Generator 函数可以不用`yield`表达式，这时就变成了一个单纯的
 
 ### 与 Iterator 接口的关系
 
+```javascript
+var myIterable = {};
+myIterable[Symbol.iterator] = function* () {
+  yield 1;
+  yield 2;
+  yield 3;
+  return 4;
+};
+
+[...myIterable] // [1, 2, 3],因为4的时候，done为true
+```
+
 由于 Generator 函数就是遍历器生成函数，因此可以把 Generator 赋值给对象的`Symbol.iterator`属性，从而使得该对象具有 Iterator 接口。
 
 ```javascript
@@ -127,6 +139,22 @@ g.next(true) // { value: 0, done: false }
 
 
 ## for...of 循环
+
+```javascript
+function* foo() {
+  yield 1;
+  yield 2;
+  yield 3;
+  yield 4;
+  yield 5;
+  return 6;
+}
+
+for (let v of foo()) {
+  console.log(v);
+}
+// 1 2 3 4 5，因为6的时候，done为true
+```
 
 * `for...of`循环可以自动遍历 Generator 函数运行时生成的`Iterator`对象，且此时不再需要调用`next`方法。
 
@@ -280,3 +308,312 @@ g.next() // { value: 7, done: true }
 ## yield* 表达式
 
 ES6 提供了`yield*`表达式，作为解决办法，用来在一个 Generator 函数里面执行另一个 Generator 函数。
+
+`yield*`后面的 Generator 函数（没有`return`语句时），等同于在 Generator 函数内部，部署一个`for...of`循环。
+
+任何数据结构只要有 Iterator 接口，就可以被`yield*`遍历。
+
+如果被代理的 Generator 函数有`return`语句，那么就可以向代理它的 Generator 函数返回数据。
+
+```javascript
+function* foo() {
+  yield 2;
+  yield 3;
+  return "foo";
+}
+
+function* bar() {
+  yield 1;
+  var v = yield* foo();
+  console.log("v: " + v);
+  yield 4;
+}
+
+var it = bar();
+
+it.next()
+// {value: 1, done: false}
+it.next()
+// {value: 2, done: false}
+it.next()
+// {value: 3, done: false}
+it.next();
+// "v: foo"
+// {value: 4, done: false}
+it.next()
+// {value: undefined, done: true}
+```
+
+
+
+## 作为对象属性的 Generator 函数
+
+如果一个对象的属性是 Generator 函数，可以简写成下面的形式。
+
+```javascript
+let obj = {
+  * myGeneratorMethod() {
+    ···
+  }
+};
+```
+
+等价于
+
+它的完整形式如下，与上面的写法是等价的。
+
+```javascript
+let obj = {
+  myGeneratorMethod: function* () {
+    // ···
+  }
+};
+```
+
+
+
+## Generator 函数的this
+
+Generator 函数总是返回一个遍历器，ES6 规定这个遍历器是 Generator 函数的实例，也继承了 Generator 函数的`prototype`对象上的方法。
+
+```javascript
+function* g() {}
+
+g.prototype.hello = function () {
+  return 'hi!';
+};
+
+let obj = g();
+
+obj instanceof g // true
+obj.hello() // 'hi!'
+```
+
+>  如果把Generator 函数当作普通的构造函数，并不会生效，因为Generator 函数返回的总是遍历器对象，而不是`this`对象。
+
+```javascript
+function* g() {
+  this.a = 11;
+}
+
+let obj = g();
+obj.next();
+obj.a // undefined
+```
+
+> Generator 函数也不能跟`new`命令一起用，会报错。
+
+## 含义
+
+### Generator 与状态机
+
+### Generator 与协程
+
+暂时略
+
+### Generator 与上下文
+
+
+
+## 应用
+
+### 异步操作的同步化表达
+
+例子：
+
+```javascript
+function* loadUI() {
+  showLoadingScreen();
+  yield loadUIDataAsynchronously();
+  hideLoadingScreen();
+}
+var loader = loadUI();
+// 加载UI
+loader.next()
+
+// 卸载UI
+loader.next()
+```
+
+```javascript
+function* main() {
+  var result = yield request("http://some.url");
+  var resp = JSON.parse(result);
+    console.log(resp.value);
+}
+
+function request(url) {
+  makeAjaxCall(url, function(response){
+    it.next(response);
+  });
+}
+
+var it = main();
+it.next();
+```
+
+### 控制流管理
+
+### 部署 Iterator 接口
+
+### 作为数据结构
+
+
+
+# Generator 函数的异步应用
+
+## Thunk 函数
+
+Thunk 函数是自动执行 Generator 函数的一种方法。
+
+### Thunk 函数的含义
+
+编译器的“传名调用”实现，往往是将参数放到一个临时函数之中，再将这个临时函数传入函数体。这个临时函数就叫做 Thunk 函数。
+
+### JavaScript 语言的 Thunk 函数
+
+在 JavaScript 语言中，Thunk 函数替换的不是表达式，而是多参数函数，将其替换成一个只接受回调函数作为参数的单参数函数。
+
+经过转换器处理，它变成了一个单参数函数，只接受回调函数作为参数。这个单参数版本，就叫做 Thunk 函数。
+
+### Thunkify 模块
+
+生产环境的转换器，建议使用 Thunkify 模块。
+
+首先是安装。
+
+```bash
+$ npm install thunkify
+```
+
+使用方式如下。
+
+```javascript
+var thunkify = require('thunkify');
+var fs = require('fs');
+
+var read = thunkify(fs.readFile);
+read('package.json')(function(err, str){
+  // ...
+});
+```
+
+### Generator 函数的流程管理
+
+### Thunk 函数的自动流程管理
+
+```javascript
+function run(fn) {
+  var gen = fn();
+
+  function next(err, data) {
+    var result = gen.next(data);
+    if (result.done) return;
+    result.value(next);
+  }
+
+  next();
+}
+
+function* g() {
+  // ...
+}
+
+run(g);
+```
+
+```javascript
+var g = function* (){
+  var f1 = yield readFileThunk('fileA');
+  var f2 = yield readFileThunk('fileB');
+  // ...
+  var fn = yield readFileThunk('fileN');
+};
+
+run(g);
+```
+
+## co 模块
+
+使用 co 的前提条件是，Generator 函数的`yield`命令后面，只能是 Thunk 函数或 Promise 对象
+
+### 基于 Promise 对象的自动执行
+
+```javascript
+var fs = require('fs');
+
+var readFile = function (fileName){
+  return new Promise(function (resolve, reject){
+    fs.readFile(fileName, function(error, data){
+      if (error) return reject(error);
+      resolve(data);
+    });
+  });
+};
+
+var gen = function* (){
+  var f1 = yield readFile('/etc/fstab');
+  var f2 = yield readFile('/etc/shells');
+  console.log(f1.toString());
+  console.log(f2.toString());
+};
+```
+
+```javascript
+var g = gen();
+
+g.next().value.then(function(data){
+  g.next(data).value.then(function(data){
+    g.next(data);
+  });
+});
+```
+
+理解了这一点，就可以写出一个自动执行器。
+
+```javascript
+function run(gen){
+  var g = gen();
+
+  function next(data){
+    var result = g.next(data);
+    if (result.done) return result.value;
+    result.value.then(function(data){
+      next(data);
+    });
+  }
+
+  next();
+}
+
+run(gen);
+```
+
+
+
+### 处理并发的异步操作
+
+co 支持并发的异步操作，即允许某些操作同时进行，等到它们全部完成，才进行下一步。
+
+这时，要把并发的操作都放在数组或对象里面，跟在`yield`语句后面。
+
+```javascript
+// 数组的写法
+co(function* () {
+  var res = yield [
+    Promise.resolve(1),
+    Promise.resolve(2)
+  ];
+  console.log(res);
+}).catch(onerror);
+
+// 对象的写法
+co(function* () {
+  var res = yield {
+    1: Promise.resolve(1),
+    2: Promise.resolve(2),
+  };
+  console.log(res);
+}).catch(onerror);
+```
+
