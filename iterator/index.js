@@ -127,30 +127,28 @@
 //     g.next(data);
 //   });
 
-
-
 /**
  * node 环境测试
  */
-var fs = require("fs");
-var thunkify = require("thunkify");
-var co = require("co");
-var path = require("path");
-var readFileThunk = thunkify(fs.readFile);
+// var fs = require("fs");
+// var thunkify = require("thunkify");
+// var co = require("co");
+// var path = require("path");
+// var readFileThunk = thunkify(fs.readFile);
 
-var g = function*() {
-  console.log("start");
-  var f1 = yield readFileThunk(path.join(__dirname,'./index.html'));
-  console.log("f1");
-  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
-  console.log("f2");
-  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
-  console.log("f3");
-  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
-  console.log("f4");
-  var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
-  console.log("f5");
-};
+// var g = function*() {
+//   console.log("start");
+//   var f1 = yield readFileThunk(path.join(__dirname,'./index.html'));
+//   console.log("f1");
+//   var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+//   console.log("f2");
+//   var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+//   console.log("f3");
+//   var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+//   console.log("f4");
+//   var f2 = yield readFileThunk(path.join(__dirname,'./index.html'));
+//   console.log("f5");
+// };
 
 // thunk 自动执行器
 // function run(fn) {
@@ -167,7 +165,6 @@ var g = function*() {
 
 // run(g)
 
-
 // co(g)
 //   .then(function() {
 //     console.log("Generator 函数执行完成");
@@ -175,3 +172,4 @@ var g = function*() {
 //   .catch(function(e) {
 //     console.log(e);
 //   });
+
