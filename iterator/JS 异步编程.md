@@ -32,6 +32,44 @@ async 及 await 的特点，它们的优点和缺点分别是什么？
 
 await 原理是什么？
 
-`async` 和 `await` 可以说是异步终极解决方案了，相比直接使用 `Promise` 来说，优势在于处理 `then`的调用链，能够更清晰准确的写出代码，毕竟写一大堆 `then` 也很恶心，并且也能优雅地解决回调地狱问题。当然也存在一些缺点，因为 `await` 将异步代码改造成了同步代码，如果多个异步代码没有依赖性却使用了 `await` 会导致性能上的降低。
+`async` 和 `await` 可以说是异步终极解决方案了，相比直接使用 `Promise` 来说，优势在于处理 `then`的调用链，能够更清晰准确的写出代码，毕竟写一大堆 `then` 也很恶心，并且也能**优雅地解决回调地狱问题**。当然也存在一些缺点，因为 `await` 将异步代码改造成了同步代码，如果**多个异步代码没有依赖性**却使用了 `await` 会导致**性能上的降低**。
 
-就是将 Generator 函数、Generator和自动执行器，包装在一个函数里。
+**就是将 Generator 函数、Promise和自动执行器，包装在一个函数里。**
+
+
+
+## 常用定时器函数
+
+setTimeout、setInterval、requestAnimationFrame 各有什么特点？
+
+setTimeout、setInterval 
+
+如果你有循环定时器的需求，其实完全可以通过 `requestAnimationFrame` 来实现
+
+```
+function setInterval(callback, interval) {
+  let timer
+  const now = Date.now
+  let startTime = now()
+  let endTime = startTime
+  const loop = () => {
+    timer = window.requestAnimationFrame(loop)
+    endTime = now()
+    if (endTime - startTime >= interval) {
+      startTime = endTime = now()
+      callback(timer)
+    }
+  }
+  timer = window.requestAnimationFrame(loop)
+  return timer
+}
+
+let a = 0
+setInterval(timer => {
+  console.log(1)
+  a++
+  if (a === 3) cancelAnimationFrame(timer)
+}, 1000)
+```
+
+首先 `requestAnimationFrame` 自带函数节流功能，基本可以保证在 16.6 毫秒内只执行一次（不掉帧的情况下），并且该函数的延时效果是精确的，没有其他定时器时间不准的问题。
